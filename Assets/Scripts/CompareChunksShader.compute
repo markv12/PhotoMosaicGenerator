@@ -1,17 +1,25 @@
 // Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel CSMain
 
-RWStructuredBuffer<float4> color1Buffer;
-RWStructuredBuffer<float4> color2Buffer;
+RWStructuredBuffer<int> color1Buffer;
+RWStructuredBuffer<int> color2Buffer;
 RWStructuredBuffer<float> sumBuffer;
 
 [numthreads(8,8,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
-    float4 color1 = color1Buffer[id.x];
-    float4 color2 = color2Buffer[id.x];
-    float bw1 = color1.r * 0.3 + color1.g * 0.59 + color1.b * 0.11;
-    float bw2 = color2.r * 0.3 + color2.g * 0.59 + color2.b * 0.11;
+    int color1Int = color1Buffer[id.x];
+    int color2Int = color2Buffer[id.x];
+    int color1r = color1Int & 0xFF;
+    int color1g = (color1Int >> 8) & 0xFF;
+    int color1b = (color1Int >> 16) & 0xFF;
+
+    int color2r = color2Int & 0xFF;
+    int color2g = (color2Int >> 8) & 0xFF;
+    int color2b = (color2Int >> 16) & 0xFF;
+
+    float bw1 = color1r * 0.3 + color1g * 0.59 + color1b * 0.11;
+    float bw2 = color2r * 0.3 + color2g * 0.59 + color2b * 0.11;
     float bwDiff = abs(bw1 - bw2);
 
     sumBuffer[id.x] = bwDiff;

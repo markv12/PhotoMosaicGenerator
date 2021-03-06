@@ -20,9 +20,9 @@ public class MosaicManager : MonoBehaviour
     public void Run()
     {
         kernelHandle = computeShader.FindKernel("CSMain");
-        color1Buffer = new ComputeBuffer(BUFFER_LENGTH, sizeof(float) * 4, ComputeBufferType.Default);
-        color2Buffer = new ComputeBuffer(BUFFER_LENGTH, sizeof(float) * 4, ComputeBufferType.Default);
-        diffBuffer = new ComputeBuffer(BUFFER_LENGTH, sizeof(float), ComputeBufferType.Default);
+        color1Buffer = new ComputeBuffer(BUFFER_LENGTH, sizeof(int), ComputeBufferType.Default);
+        color2Buffer = new ComputeBuffer(BUFFER_LENGTH, sizeof(int), ComputeBufferType.Default);
+        diffBuffer = new ComputeBuffer(BUFFER_LENGTH, sizeof(int), ComputeBufferType.Default);
 
         TextureChunkData[] chunksToPullFrom = textureCollection.GetTextureChunkData();
 
@@ -45,21 +45,24 @@ public class MosaicManager : MonoBehaviour
     {
         int bestChunkIndex = -1;
         float lowestDifference = float.MaxValue;
-        color1Buffer.SetData(mainChunk.colors);
+        int[] mainChunkInts = GetIntsForColors(mainChunk.colors);
+
+        color1Buffer.SetData(mainChunkInts);
+        computeShader.SetBuffer(kernelHandle, "color1Buffer", color1Buffer);
 
         for (int i = 0; i < chunksToPullFrom.Length; i++)
         {
             TextureChunkData candidateChunk = chunksToPullFrom[i];
-            
-            color2Buffer.SetData(candidateChunk.colors);
+
+            int[] candidateInts = GetIntsForColors(candidateChunk.colors);
+            color2Buffer.SetData(candidateInts);
 
             diffBuffer.SetData(new float[mainChunk.colors.Length]);
 
-            computeShader.SetBuffer(kernelHandle, "color1Buffer", color1Buffer);
             computeShader.SetBuffer(kernelHandle, "color2Buffer", color2Buffer);
             computeShader.SetBuffer(kernelHandle, "sumBuffer", diffBuffer);
 
-            computeShader.Dispatch(0, BUFFER_LENGTH / 8, BUFFER_LENGTH/8, 1);
+            computeShader.Dispatch(0, BUFFER_LENGTH / 8, BUFFER_LENGTH / 8, 1);
             float[] resultContainer = new float[mainChunk.colors.Length];
             diffBuffer.GetData(resultContainer);
 
@@ -68,13 +71,28 @@ public class MosaicManager : MonoBehaviour
             {
                 difference += resultContainer[i];
             }
-            
-            if(difference < lowestDifference)
+
+            if (difference < lowestDifference)
             {
                 lowestDifference = difference;
                 bestChunkIndex = i;
             }
         }
         return chunksToPullFrom[bestChunkIndex];
+    }
+
+    private static int[] GetIntsForColors(Color32[] colors)
+    {
+        int[] ints = new int[colors.Length];
+        for (int i = 0; i < colors.Length; i++)
+        {
+            Color32 c32 = colors[i];
+            int myInt = 0;
+            myInt += (int)c32.r;
+            myInt += (int)(c32.g << 8);
+            myInt += (int)(c32.b << 16);
+            ints[i] = myInt;
+        }
+        return ints;
     }
 }
