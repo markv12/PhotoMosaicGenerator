@@ -20,6 +20,9 @@ public class MosaicManager : MonoBehaviour
     public void Run()
     {
         kernelHandle = computeShader.FindKernel("CSMain");
+        color1Buffer = new ComputeBuffer(BUFFER_LENGTH, sizeof(float) * 4, ComputeBufferType.Default);
+        color2Buffer = new ComputeBuffer(BUFFER_LENGTH, sizeof(float) * 4, ComputeBufferType.Default);
+        diffBuffer = new ComputeBuffer(BUFFER_LENGTH, sizeof(float), ComputeBufferType.Default);
 
         TextureChunkData[] chunksToPullFrom = textureCollection.GetTextureChunkData();
 
@@ -40,47 +43,32 @@ public class MosaicManager : MonoBehaviour
 
     private TextureChunkData GetBestChunkForChunk(TextureChunkData mainChunk, TextureChunkData[] chunksToPullFrom)
     {
-        int bigSize = BUFFER_LENGTH * chunksToPullFrom.Length;
-        Color[] mainColorBigArray = new Color[bigSize];
-        Color[] candidateColorBigArray = new Color[bigSize];
+        int bestChunkIndex = -1;
+        float lowestDifference = float.MaxValue;
+        color1Buffer.SetData(mainChunk.colors);
+
         for (int i = 0; i < chunksToPullFrom.Length; i++)
         {
             TextureChunkData candidateChunk = chunksToPullFrom[i];
-            for (int j = 0; j < BUFFER_LENGTH; j++)
-            {
-                int index = (i * BUFFER_LENGTH) + j;
-                mainColorBigArray[index] = mainChunk.colors[j];
-                candidateColorBigArray[index] = candidateChunk.colors[j];
-            }
-        }
-        color1Buffer = new ComputeBuffer(bigSize, sizeof(float) * 4, ComputeBufferType.Default);
-        color2Buffer = new ComputeBuffer(bigSize, sizeof(float) * 4, ComputeBufferType.Default);
-        diffBuffer = new ComputeBuffer(bigSize, sizeof(float), ComputeBufferType.Default);
+            
+            color2Buffer.SetData(candidateChunk.colors);
 
-        color1Buffer.SetData(mainColorBigArray);
+            diffBuffer.SetData(new float[mainChunk.colors.Length]);
 
-        color2Buffer.SetData(candidateColorBigArray);
+            computeShader.SetBuffer(kernelHandle, "color1Buffer", color1Buffer);
+            computeShader.SetBuffer(kernelHandle, "color2Buffer", color2Buffer);
+            computeShader.SetBuffer(kernelHandle, "sumBuffer", diffBuffer);
 
-        diffBuffer.SetData(new float[bigSize]);
+            computeShader.Dispatch(0, BUFFER_LENGTH / 8, BUFFER_LENGTH/8, 1);
+            float[] resultContainer = new float[mainChunk.colors.Length];
+            diffBuffer.GetData(resultContainer);
 
-        computeShader.SetBuffer(kernelHandle, "color1Buffer", color1Buffer);
-        computeShader.SetBuffer(kernelHandle, "color2Buffer", color2Buffer);
-        computeShader.SetBuffer(kernelHandle, "sumBuffer", diffBuffer);
-
-        computeShader.Dispatch(0, bigSize / 8, bigSize / 8, 1);
-        float[] resultContainer = new float[bigSize];
-        diffBuffer.GetData(resultContainer);
-
-        int bestChunkIndex = -1;
-        float lowestDifference = float.MaxValue;
-        for (int i = 0; i < chunksToPullFrom.Length; i++)
-        {
             float difference = 0;
-            for (int j = 0; j < BUFFER_LENGTH; j++)
+            for (int j = 0; j < resultContainer.Length; j++)
             {
-                int index = (i * BUFFER_LENGTH) + j;
-                difference += resultContainer[index];
+                difference += resultContainer[i];
             }
+            
             if(difference < lowestDifference)
             {
                 lowestDifference = difference;
