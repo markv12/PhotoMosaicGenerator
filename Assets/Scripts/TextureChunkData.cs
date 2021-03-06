@@ -2,12 +2,12 @@
 
 public class TextureChunkData //64x64
 {
-    public Color32[] colors;
+    public Color[] colors;
 
     public void WriteToPNG(string fileName)
     {
         Texture2D tex = new Texture2D(64, 64);
-        tex.SetPixels32(colors);
+        tex.SetPixels(colors);
         TextureUtility.WriteTexToPNG(tex, fileName);
     }
 
@@ -19,7 +19,7 @@ public class TextureChunkData //64x64
             difference += DiffBetweenColors(colors[i], otherChunk.colors[i]);
         }
 
-        static int DiffBetweenColors(Color32 color1, Color32 color2)
+        static int DiffBetweenColors(Color color1, Color color2)
         {
             //int rDiff = color1.r - color2.r;
             //int gDiff = color1.g - color2.g;

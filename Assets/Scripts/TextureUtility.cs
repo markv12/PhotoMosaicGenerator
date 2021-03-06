@@ -4,7 +4,7 @@ using UnityEngine;
 
 public static class TextureUtility
 {
-    private const int CHUNK_SIZE = 64;
+    public const int CHUNK_SIZE = 32;
 
     public static TextureChunkData[] GetChunkDataForTexture(Texture2D t)
     {
@@ -17,7 +17,7 @@ public static class TextureUtility
         int columns = t.width / CHUNK_SIZE;
         int rows = t.height / CHUNK_SIZE;
 
-        Color32[] colors = t.GetPixels32();
+        Color[] colors = t.GetPixels();
         for (int i = 0; i < columns; i++)
         {
             int xOffset = i * CHUNK_SIZE;
@@ -32,9 +32,9 @@ public static class TextureUtility
         }
     }
 
-    private static Color32[] GetPieceOfImage(Color32[] colors, int xOffset, int yOffset, int width)
+    private static Color[] GetPieceOfImage(Color[] colors, int xOffset, int yOffset, int width)
     {
-        Color32[] result = new Color32[CHUNK_SIZE * CHUNK_SIZE];
+        Color[] result = new Color[CHUNK_SIZE * CHUNK_SIZE];
         for (int i = 0; i < CHUNK_SIZE; i++)
         {
             for (int j = 0; j < CHUNK_SIZE; j++)
@@ -50,7 +50,7 @@ public static class TextureUtility
         int chunkCount = recreatedChunks.Length;
         int columns = origImageWidth / CHUNK_SIZE;
         int rows = chunkCount / columns;
-        Color32[] colors = new Color32[columns * CHUNK_SIZE * rows * CHUNK_SIZE];
+        Color[] colors = new Color[columns * CHUNK_SIZE * rows * CHUNK_SIZE];
 
         for (int i = 0; i < recreatedChunks.Length; i++)
         {
@@ -62,11 +62,11 @@ public static class TextureUtility
         }
 
         Texture2D result = new Texture2D(columns * CHUNK_SIZE, rows * CHUNK_SIZE);
-        result.SetPixels32(colors);
+        result.SetPixels(colors);
         return result;
     }
 
-    private static void WriteToColorArray(Color32[] destination, Color32[] source, int xOffset, int yOffset, int width)
+    private static void WriteToColorArray(Color[] destination, Color[] source, int xOffset, int yOffset, int width)
     {
         for (int i = 0; i < CHUNK_SIZE; i++)
         {

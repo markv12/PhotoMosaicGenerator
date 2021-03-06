@@ -162,8 +162,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd523e1e1e14fe94c9171d9aeb426084, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  textureToRecreate: {fileID: 0}
+  textureToRecreate: {fileID: 2800000, guid: 6902a8b747595b747be2698844cca11d, type: 3}
   textureCollection: {fileID: 11400000, guid: 2efd1a75c3c7533498e331ce3281c474, type: 2}
+  computeShader: {fileID: 7200000, guid: 7f14912fcbbb91c4da23b3f71146bbd2, type: 3}
 --- !u!20 &519420031
 Camera:
   m_ObjectHideFlags: 0
