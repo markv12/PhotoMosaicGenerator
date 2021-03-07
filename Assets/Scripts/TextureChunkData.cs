@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class TextureChunkData //64x64
+public struct TextureChunkData //64x64
 {
     public Color32[] colors;
 
